@@ -18,19 +18,27 @@ import sklearn
 # -----------------------------
 # Configure logging
 # -----------------------------
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
 
 # -----------------------------
 # Argument parser
 # -----------------------------
 def parse_args():
-    parser = argparse.ArgumentParser(description="Train and register final model from config.")
-    parser.add_argument("--config", type=str, required=True, help="Path to model_config.yaml")
-    parser.add_argument("--data", type=str, required=True, help="Path to processed CSV dataset")
-    parser.add_argument("--models-dir", type=str, required=True, help="Directory to save trained model")
-    parser.add_argument("--mlflow-tracking-uri", type=str, default=None, help="MLflow tracking URI")
+    parser = argparse.ArgumentParser(
+        description="Train and register final model from config.")
+    parser.add_argument("--config", type=str, required=True,
+                        help="Path to model_config.yaml")
+    parser.add_argument("--data", type=str, required=True,
+                        help="Path to processed CSV dataset")
+    parser.add_argument("--models-dir", type=str, required=True,
+                        help="Directory to save trained model")
+    parser.add_argument("--mlflow-tracking-uri", type=str, default=None,
+                        help="MLflow tracking URI")
     return parser.parse_args()
+
 
 # -----------------------------
 # Load model from config
@@ -45,6 +53,7 @@ def get_model_instance(name, params):
     if name not in model_map:
         raise ValueError(f"Unsupported model: {name}")
     return model_map[name](**params)
+
 
 # -----------------------------
 # Main logic
@@ -66,7 +75,8 @@ def main(args):
     # Use all features except the target variable
     X = data.drop(columns=[target])
     y = data[target]
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2,
+                                                        random_state=42)
 
     # Get model
     model = get_model_instance(model_cfg['best_model'], model_cfg['parameters'])
@@ -126,11 +136,14 @@ def main(args):
 
         # Add tags for better organization
         client.set_registered_model_tag(model_name, "algorithm", model_cfg['best_model'])
-        client.set_registered_model_tag(model_name, "hyperparameters", str(model_cfg['parameters']))
-        client.set_registered_model_tag(model_name, "features", "All features except target variable")
+        client.set_registered_model_tag(model_name, "hyperparameters",
+                                        str(model_cfg['parameters']))
+        client.set_registered_model_tag(model_name, "features",
+                                        "All features except target variable")
         client.set_registered_model_tag(model_name, "target_variable", target)
         client.set_registered_model_tag(model_name, "training_dataset", args.data)
-        client.set_registered_model_tag(model_name, "model_path", f"{args.models_dir}/trained/{model_name}.pkl")
+        client.set_registered_model_tag(model_name, "model_path",
+                                        f"{args.models_dir}/trained/{model_name}.pkl")
 
         # Add dependency tags
         deps = {
@@ -148,6 +161,7 @@ def main(args):
         joblib.dump(model, save_path)
         logger.info(f"Saved trained model to: {save_path}")
         logger.info(f"Final MAE: {mae:.2f}, R²: {r2:.4f}")
+
 
 if __name__ == "__main__":
     args = parse_args()
